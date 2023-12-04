@@ -1,5 +1,6 @@
 package org.example;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,11 +22,13 @@ public class Day4 extends Day {
                                             "Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11"};
 
         int[] testTargets = new int[]{8, 2, 2, 1, 0, 0};
+        int part2Target = 30;
 
+        System.out.println("PART 1 TESTS:");
         for (int i = 0; i < testInputs.length; i++) {
             String input = testInputs[i];
             int target = testTargets[i];
-            int result = getPointsFromInput(input);
+            int result = getPointsFromInput(input, true);
             String verdict;
             if (target == result) {
                 verdict = "PASSED";
@@ -35,6 +38,20 @@ public class Day4 extends Day {
             }
             System.out.println(verdict + "! Input: " + input + " Target: " + target + " Obtained: " + result);
         }
+
+        System.out.println("PART 2 TESTS:");
+        ArrayList<String> inputsCopy = this.inputs;
+
+        this.inputs = new ArrayList<>(Arrays.asList(testInputs));
+        int part2Result = Integer.parseInt(resolvePuzzle2());
+        String part2Verdict = "FAILED";
+        if (part2Result == part2Target) {
+            part2Verdict = "PASSED";
+        }
+        System.out.println(part2Verdict + "! Target: " + part2Target + " Obtained:" + part2Result);
+
+        this.inputs = inputsCopy;
+        System.out.println("TESTS CONCLUDED!");
     }
 
     @Override
@@ -42,7 +59,7 @@ public class Day4 extends Day {
         int solution = 0;
 
         for (String input : inputs) {
-            solution += getPointsFromInput(input);
+            solution += getPointsFromInput(input, true);
         }
 
         return String.valueOf(solution);
@@ -50,10 +67,25 @@ public class Day4 extends Day {
 
     @Override
     String resolvePuzzle2() {
-        return null;
+        int[] cardCopies = new int[inputs.size()];
+        Arrays.fill(cardCopies, 1);
+
+        int currentCard = 0;
+        for (String input : inputs) {
+            int matchingNumbers = getPointsFromInput(input, false);
+            for (int i = currentCard + 1; i < currentCard + 1 + matchingNumbers; i++) {
+                if (i < cardCopies.length) {
+                    cardCopies[i] += cardCopies[currentCard];
+                }
+            }
+
+            currentCard++;
+        }
+
+        return String.valueOf(Arrays.stream(cardCopies).sum());
     }
 
-    public int getPointsFromInput(String input) {
+    public int getPointsFromInput(String input, boolean calculatePoints) {
         input = input.replace("  ", " ");
         String[] cardParts = input.split(": ");
         String[] cardNumbersParts = cardParts[1].split(" \\| ");
@@ -62,7 +94,12 @@ public class Day4 extends Day {
 
         int matchingNumbers = countMatchingNumbers(winningNumbers, yourNumbers);
 
-        return calculatePoints(matchingNumbers);
+        if (calculatePoints) {
+            return calculatePoints(matchingNumbers);
+        }
+        else {
+            return matchingNumbers;
+        }
     }
 
     private int countMatchingNumbers(String[] winningNumbers, String[] yourNumbers) {
