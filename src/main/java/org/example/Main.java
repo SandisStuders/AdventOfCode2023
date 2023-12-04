@@ -3,7 +3,7 @@ package org.example;
 public class Main {
     public static void main(String[] args) {
 
-        new Day2(true);
+        new Day3(true);
 
     }
 }
