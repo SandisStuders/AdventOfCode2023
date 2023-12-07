@@ -1,8 +1,6 @@
 package org.example;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedList;
+import java.util.*;
 
 public class Day3 extends Day {
 
@@ -16,6 +14,8 @@ public class Day3 extends Day {
 
     @Override
     void testResolver() {
+        System.out.println("TESTING STARTED");
+
         char[][] testCharMap = new char[][]{"467..114..".toCharArray(),
                                             "...*......".toCharArray(),
                                             "..35..633.".toCharArray(),
@@ -54,6 +54,44 @@ public class Day3 extends Day {
                 i++;
             }
         }
+
+        System.out.println("PART 2 TESTS");
+        int[][] starLocations = new int[][]{{1, 3}, {4, 3}, {8, 5}, {-1, -1}};
+        ArrayList<Object[]> adjacentNumberTargets = new ArrayList<>(List.of(new Object[]{467, 35},
+                new Object[]{617}, new Object[]{755, 598}, new Object[]{}));
+
+        currentRow = 0;
+        currentCol = 0;
+        int[] nextStar = new int[]{0, 0};
+
+        i = 0;
+        while(nextStar[0] != -1) {
+            nextStar = findNextStar(testCharMap, currentRow, currentCol);
+            currentRow = nextStar[0];
+            currentCol = nextStar[1] + 1;
+
+            String verdict = "FAILED";
+            if (Arrays.equals(nextStar, starLocations[i])) {
+                verdict = "PASSED";
+            }
+            System.out.println(verdict + "! Star number " + i +
+                    ". Target location: " + Arrays.toString(starLocations[i]) +
+                    " Obtained location: " + Arrays.toString(nextStar));
+
+            ArrayList<Integer> adjacentNumbers = getNumbersAdjacentToStar(testCharMap, nextStar[0], nextStar[1]);
+
+            verdict = "FAILED";
+            if (Arrays.equals(adjacentNumbers.toArray(), adjacentNumberTargets.get(i))) {
+                verdict = "PASSED";
+            }
+            System.out.println(verdict +
+                    "! Target adjacent numbers: " + Arrays.toString(adjacentNumberTargets.get(i)) +
+                    " Obtained adjacent numbers: " + adjacentNumbers);
+
+            i++;
+        }
+
+        System.out.println("TESTING CONCLUDED");
     }
 
     @Override
@@ -68,8 +106,6 @@ public class Day3 extends Day {
             nextDigit = findNextDigit(this.charMap, currentRow, currentCol);
             currentRow = nextDigit.row;
             currentCol = nextDigit.lastCol + 1;
-            System.out.println("Digit obtained! Row: " + nextDigit.row + " First col: " + nextDigit.firstCol +
-                    " Last col: " + nextDigit.lastCol);
 
             // Find if digit surrounded by a symbol
             boolean digitAdjacentToSymbol = digitIsAdjacentToSymbol(this.charMap, nextDigit);
@@ -77,7 +113,6 @@ public class Day3 extends Day {
             // If digit surrounded find its value and add to sum
             if (digitAdjacentToSymbol) {
                 solution += getDigitValue(this.charMap, nextDigit);
-                System.out.println("Digit value: " + getDigitValue(this.charMap, nextDigit));
             }
         }
 
@@ -104,46 +139,6 @@ public class Day3 extends Day {
         }
 
         return String.valueOf(solution);
-    }
-
-    private ArrayList<Integer> getNumbersAdjacentToStar(char[][] charMap, int row, int col) {
-        ArrayList<Integer> adjacentNumbers = new ArrayList<>();
-
-        // Find all adjacent coordinates
-        int prevCol = col - 1;
-        int nextCol = col + 1;
-        int prevRow = row - 1;
-        int nextRow = row + 1;
-
-        ArrayList<int[]> adjacentCoordinates = new ArrayList<>();
-        adjacentCoordinates.add(new int[]{row, prevCol});
-        adjacentCoordinates.add(new int[]{row, nextCol});
-        for (int i = prevCol; i <= nextCol; i++) {
-            adjacentCoordinates.add(new int[]{prevRow, i});
-            adjacentCoordinates.add(new int[]{nextRow, i});
-        }
-
-        // Remove coordinates that are not valid
-        for (int i = adjacentCoordinates.size() - 1; i >= 0; i--) {
-            int[] coordinates = adjacentCoordinates.get(i);
-            if (!coordinatesAreValid(charMap, coordinates[0], coordinates[1])) {
-                adjacentCoordinates.remove(i);
-            }
-        }
-
-        for (int i = 0; i < adjacentCoordinates.size(); i++) {
-            int[] coordinates = adjacentCoordinates.get(i);
-            int adjacentCharRow = coordinates[0];
-            int adjacentCharCol = coordinates[1];
-            char c = charMap[adjacentCharRow][adjacentCharCol];
-            if (Character.isDigit(c)) {
-                char prevC = charMap[adjacentCharRow][adjacentCharCol - 1]; //TODO: Check if valid
-
-                char nextC = charMap[adjacentCharRow][adjacentCharCol + 1]; //TODO: Check if valid
-            }
-        }
-
-        return adjacentNumbers;
     }
 
     private int[] findNextStar(char[][] charMap, int currentRow, int currentCol) {
@@ -234,11 +229,111 @@ public class Day3 extends Day {
         return false;
     }
 
+    private ArrayList<Integer> getNumbersAdjacentToStar(char[][] charMap, int row, int col) {
+        if (row < 0 || row >= charMap.length || col < 0 || col >= charMap[0].length) {
+            return new ArrayList<>();
+        }
+
+        ArrayList<Integer> adjacentNumbers = new ArrayList<>();
+
+        int prevCol = col - 1;
+        int nextCol = col + 1;
+        int prevRow = row - 1;
+        int nextRow = row + 1;
+
+        if (coordinatesAreValid(charMap, row, prevCol) && Character.isDigit(charMap[row][prevCol])) {
+            int adjacentNumber = getDigitValueFromSingleCharMapLoc(charMap, row, prevCol, "left");
+            adjacentNumbers.add(adjacentNumber);
+        }
+
+        if (coordinatesAreValid(charMap, row, nextCol) && Character.isDigit(charMap[row][nextCol])) {
+            int adjacentNumber = getDigitValueFromSingleCharMapLoc(charMap, row, nextCol, "right");
+            adjacentNumbers.add(adjacentNumber);
+        }
+
+        if (coordinatesAreValid(charMap, prevRow, col)) {
+            if (Character.isDigit(charMap[prevRow][col])) {
+                int adjacentNumber = getDigitValueFromSingleCharMapLoc(charMap, prevRow, col, "both");
+                adjacentNumbers.add(adjacentNumber);
+            }
+            else {
+                if (coordinatesAreValid(charMap, prevRow, prevCol) && Character.isDigit(charMap[prevRow][prevCol])) {
+                    int adjacentNumber = getDigitValueFromSingleCharMapLoc(charMap, prevRow, prevCol, "left");
+                    adjacentNumbers.add(adjacentNumber);
+                }
+
+                if (coordinatesAreValid(charMap, prevRow, nextCol) && Character.isDigit(charMap[prevRow][nextCol])) {
+                    int adjacentNumber = getDigitValueFromSingleCharMapLoc(charMap, prevRow, nextCol, "right");
+                    adjacentNumbers.add(adjacentNumber);
+                }
+            }
+        }
+
+        if (coordinatesAreValid(charMap, nextRow, col)) {
+            if (Character.isDigit(charMap[nextRow][col])) {
+                int adjacentNumber = getDigitValueFromSingleCharMapLoc(charMap, nextRow, col, "both");
+                adjacentNumbers.add(adjacentNumber);
+            }
+            else {
+                if (coordinatesAreValid(charMap, nextRow, prevCol) && Character.isDigit(charMap[nextRow][prevCol])) {
+                    int adjacentNumber = getDigitValueFromSingleCharMapLoc(charMap, nextRow, prevCol, "left");
+                    adjacentNumbers.add(adjacentNumber);
+                }
+
+                if (coordinatesAreValid(charMap, nextRow, nextCol) && Character.isDigit(charMap[nextRow][nextCol])) {
+                    int adjacentNumber = getDigitValueFromSingleCharMapLoc(charMap, nextRow, nextCol, "right");
+                    adjacentNumbers.add(adjacentNumber);
+                }
+            }
+        }
+
+        return adjacentNumbers;
+    }
+
+    public int getDigitValueFromSingleCharMapLoc(char[][] charMap, int row, int col, String direction) {
+
+        int firstCol = -1;
+        int lastCol = -1;
+        if (Objects.equals(direction, "left")) {
+            lastCol = col;
+        } else if (Objects.equals(direction, "right")) {
+            firstCol = col;
+        }
+
+        if (Objects.equals(direction, "left") || Objects.equals(direction, "both")) {
+            for (int i = col - 1; i >= 0; i--) {
+                if (!Character.isDigit(charMap[row][i])) {
+                    firstCol = i + 1;
+                    break;
+                }
+            }
+            if (firstCol == -1) {
+                firstCol = 0;
+            }
+        }
+
+        if (Objects.equals(direction, "right") || Objects.equals(direction, "both")) {
+            for (int i = col + 1; i < charMap[0].length; i++) {
+                if (!Character.isDigit(charMap[row][i])) {
+                    lastCol = i - 1;
+                    break;
+                }
+            }
+            if (lastCol == -1) {
+                lastCol = charMap[0].length - 1;
+            }
+        }
+
+        Digit digit = new Digit(row, firstCol, lastCol);
+        return getDigitValue(charMap, digit);
+    }
+
     private int getDigitValue(char[][] charMap, Digit digit) {
         StringBuilder stringBuilder = new StringBuilder();
         for (int i = digit.firstCol; i <= digit.lastCol; i++) {
             stringBuilder.append(charMap[digit.row][i]);
         }
+
         return Integer.parseInt(stringBuilder.toString());
     }
 
