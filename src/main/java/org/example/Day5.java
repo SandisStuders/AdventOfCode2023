@@ -202,4 +202,27 @@ public class Day5 extends Day {
 
         return mapTypes;
     }
+
+    public int[][] mergeMaps(int[][] sourceMap, int[][] destinationMap) {
+
+        for (int i = 0; i < destinationMap.length; i++) {
+
+            int destinationMapSourceRangeStart = destinationMap[i][0];
+            int destinationMapSourceRangeEnd = destinationMap[i][1];
+
+            for (int j = 0; j < sourceMap.length; j++) {
+
+                int sourceMapDestinationRangeStart = sourceMap[j][2];
+                if (destinationMapSourceRangeStart > sourceMapDestinationRangeStart) {
+
+                    // Something goes here
+
+                }
+
+            }
+
+        }
+
+        return new int[0][0];
+    }
 }
